@@ -17,11 +17,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 5️⃣ Copier requirements et installer les libs Python
-COPY requirements.txt .
+COPY deploiement/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6️⃣ Copier tout le projet
-COPY . .
+# 6️⃣ Copier le code de l'application
+COPY ../api /app/api
+COPY ../src /app/src
 
 # 7️⃣ Exposer le port Cloud Run
 EXPOSE 8080

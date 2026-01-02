@@ -84,11 +84,21 @@ def predict_ratings(req: RatingRequest):
     # =========================
     # 3️⃣ Sinon, top-N recommandations
     # =========================
+    
+    # LIGNE 1 MODIFIÉE : Récupérer les films notés APRÈS les mises à jour
+    user_rated_movies = train_df[train_df['userId'] == req.user_id]['movieId'].unique().tolist()
+    
     all_movie_idx = list(movie_encoder.transform(movie_encoder.classes_))
     pred_for_user = []
+    
     for movie_idx in all_movie_idx:
-        pred_rating = algo.predict(user_idx, movie_idx).est
         movie_id = movie_encoder.inverse_transform([movie_idx])[0]
+        
+        # LIGNE 2 MODIFIÉE : Utiliser la liste complète (unique)
+        if movie_id in user_rated_movies:
+            continue
+            
+        pred_rating = algo.predict(user_idx, movie_idx).est
         title = df_movies.loc[df_movies['movieId'] == movie_id, 'title'].values
         title_str = title[0] if len(title) > 0 else "Unknown Title"
         pred_for_user.append({
@@ -100,7 +110,6 @@ def predict_ratings(req: RatingRequest):
     top_recommendations = sorted(pred_for_user, key=lambda x: x["predicted_rating"], reverse=True)[:TOP_N]
 
     return {"user_id": req.user_id, "top_recommendations": top_recommendations}
-
 
 @app.post("/retrain")
 def retrain_model():
