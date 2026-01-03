@@ -41,20 +41,22 @@ def load_data_from_gcs():
     """Charge les données depuis GCS"""
     client = storage.Client()
     bucket = client.get_bucket(BUCKET_NAME)
-
+    
+    df_blob = bucket.blob("data/df_ratings.csv")
     train_blob = bucket.blob("data/train_ratings.csv")
     movies_blob = bucket.blob("data/movies.csv")
 
     train_df = pd.read_csv(io.BytesIO(train_blob.download_as_bytes()))
     df_movies = pd.read_csv(io.BytesIO(movies_blob.download_as_bytes()))
-    return train_df, df_movies
+    return train_df, df_movies, df_blob
 
 def load_local_all_data():
     """Charge toutes les données locales"""
     data_dir = Path(__file__).parent.parent / "data"
     train_df = pd.read_csv(data_dir / "train_ratings.csv")
     df_movies = pd.read_csv(data_dir / "movies.csv")
-    return train_df, df_movies
+    df_ratings = pd.read_csv(data_dir / "df_ratings.csv")
+    return train_df, df_movies,df_ratings
 
 # ==================== CHARGEMENT MODÈLES ====================
 

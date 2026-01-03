@@ -35,9 +35,9 @@ if __name__ == "__main__":
     
     # Chargement
     if mode == "cloud":
-        train_df, _ = load_data_from_gcs()
+        _ , _ , df_ratings = load_data_from_gcs()
     else:
-        train_df = load_local_data()
+        _ , _ , df_ratings = load_local_all_data()
     
     # Entraînement
-    train_best_model(train_df, mode)
+    train_best_model(df_ratings, mode)
