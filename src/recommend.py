@@ -6,33 +6,9 @@ import pandas as pd
 from surprise import SVD
 from google.cloud import storage
 import io
-
-def load_model_and_encoders_from_gcs(bucket_name="movie-reco-models-fatma-aziz-students-group2"):
-    client = storage.Client()
-    bucket = client.get_bucket(bucket_name)
-
-    def load_pickle_from_gcs(blob_name):
-        blob = bucket.blob(f"models/{blob_name}")
-        data = blob.download_as_bytes()
-        return pickle.loads(data)
-
-    algo = load_pickle_from_gcs("svd_model.pkl")
-    user_encoder = load_pickle_from_gcs("user_encoder.pkl")
-    movie_encoder = load_pickle_from_gcs("movie_encoder.pkl")
-
-    return algo, user_encoder, movie_encoder
+from load_save_data import load_model_and_encoders_from_gcs
 
 
-def load_data_from_gcs(bucket_name="movie-reco-models-fatma-aziz-students-group2"):
-    client = storage.Client()
-    bucket = client.get_bucket(bucket_name)
-
-    train_blob = bucket.blob("data/train_ratings.csv")
-    movies_blob = bucket.blob("data/movies.csv")
-
-    train_df = pd.read_csv(io.BytesIO(train_blob.download_as_bytes()))
-    df_movies = pd.read_csv(io.BytesIO(movies_blob.download_as_bytes()))
-    return train_df, df_movies
 
 
 
