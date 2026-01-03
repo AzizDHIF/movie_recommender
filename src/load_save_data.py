@@ -29,12 +29,19 @@ def load_local_data():
     data_path = Path(__file__).parent.parent / "data" / "train_ratings.csv"
     return pd.read_csv(data_path)
 
-def load_gcs_data():
-    """Charge depuis GCS"""
+
+def load_data_from_gcs():
+      """Charge lesdonnées depuis GCS"""
     client = storage.Client()
     bucket = client.get_bucket(BUCKET_NAME)
-    blob = bucket.blob("data/train_ratings.csv")
-    return pd.read_csv(io.BytesIO(blob.download_as_bytes()))
+
+    train_blob = bucket.blob("data/train_ratings.csv")
+    movies_blob = bucket.blob("data/movies.csv")
+
+    train_df = pd.read_csv(io.BytesIO(train_blob.download_as_bytes()))
+    df_movies = pd.read_csv(io.BytesIO(movies_blob.download_as_bytes()))
+    return train_df, df_movies
+
 
 
 def load_model_and_encoders_from_gcs(bucket_name="movie-reco-models-fatma-aziz-students-group2"):

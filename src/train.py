@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 from surprise import Dataset, Reader, SVD
 from google.cloud import storage
-from load_save_data import upload_to_gcp,save_local,load_gcs_data,load_local_data
+from load_save_data import upload_to_gcp,save_local,load_data_from_gcs,load_local_data
  
 def train_best_model(train_df, save_mode="cloud"):
     """
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     import sys
     mode = sys.argv[1] if len(sys.argv) > 1 else "cloud"
     if mode == "cloud":
-        train_df = load_gcs_data()
+        train_df,x = load_data_from_gcs()
     elif mode == "local":
         train_df = load_local_data()
         
