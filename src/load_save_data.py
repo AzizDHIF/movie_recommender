@@ -3,6 +3,7 @@ import pandas as pd
 from pathlib import Path
 from google.cloud import storage
 import io
+import numpy as np
 
 BUCKET_NAME = "movie-reco-models-fatma-aziz-students-group2"
 
@@ -74,6 +75,10 @@ def load_model_and_encoders_from_gcs():
     algo = load_pickle_from_gcs("svd_model.pkl")
     user_encoder = load_pickle_from_gcs("user_encoder.pkl")
     movie_encoder = load_pickle_from_gcs("movie_encoder.pkl")
+    
+     # Vérifier le type des encodeurs
+    print(f"📦 Type user_encoder: {type(user_encoder)}")
+    print(f"📦 Type movie_encoder: {type(movie_encoder)}")
 
     return algo, user_encoder, movie_encoder
 
@@ -88,6 +93,10 @@ def load_model_and_encoders_local():
     algo = load_pickle_local("svd_model.pkl")
     user_encoder = load_pickle_local("user_encoder.pkl")
     movie_encoder = load_pickle_local("movie_encoder.pkl")
+    
+     # Vérifier le type des encodeurs
+    print(f"📦 Type user_encoder: {type(user_encoder)}")
+    print(f"📦 Type movie_encoder: {type(movie_encoder)}")
 
     return algo, user_encoder, movie_encoder
 
@@ -110,3 +119,6 @@ def load_model(source="local"):
         return load_model_and_encoders_from_gcs()
     else:
         raise ValueError("Source doit être 'local' ou 'cloud'")
+        
+        
+

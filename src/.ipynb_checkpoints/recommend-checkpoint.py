@@ -1,4 +1,3 @@
-# src/recommend.py
 """
 Module de recommandation avec gestion adaptative du cold start.
 
@@ -11,72 +10,95 @@ import pandas as pd
 import numpy as np
 from typing import List, Tuple
 import logging
+from surprise import Dataset, Reader  # <-- AJOUT
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# HELPER FUNCTIONS POUR ENCODERS
+# NOUVELLES FONCTIONS AJOUTÉES
 # ============================================================================
 
+def create_surprise_trainset(train_df):
+    """Crée un trainset pour le modèle surprise"""
+    # Préparer les données
+    surprise_data = train_df[['userId', 'movieId', 'rating']].copy()
+    surprise_data['userId'] = surprise_data['userId'].astype(str)
+    surprise_data['movieId'] = surprise_data['movieId'].astype(str)
+    surprise_data['rating'] = surprise_data['rating'].astype(float)
+    
+    # Créer trainset
+    reader = Reader(rating_scale=(0.5, 5.0))
+    data = Dataset.load_from_df(surprise_data, reader)
+    trainset = data.build_full_trainset()
+    
+    return trainset
+
+def ensure_algo_has_trainset(algo, train_df):
+    """S'assure que l'algorithme a un trainset"""
+    if not hasattr(algo, 'trainset') or algo.trainset is None:
+        # Créer un trainset et ré-entraîner
+        trainset = create_surprise_trainset(train_df)
+        algo.fit(trainset)
+    return algo
+
+def predict_with_trainset(algo, user_idx, movie_idx, train_df):
+    """Prédiction avec gestion du trainset"""
+    # S'assurer que algo a un trainset
+    algo = ensure_algo_has_trainset(algo, train_df)
+    
+    # Utiliser l'API standard de surprise
+    return algo.predict(user_idx, movie_idx)
+
+# ============================================================================
+# HELPER FUNCTIONS POUR ENCODERS (INCHANGÉ)
+# ============================================================================
+
+# Dans src/recommend.py
 def safe_transform(encoder, id_value, default_idx=None):
     """
-    Encode un ID de manière sécurisée (compatible dict et LabelEncoder).
-    
-    Args:
-        encoder: LabelEncoder sklearn ou dict
-        id_value: ID à encoder
-        default_idx: Index par défaut si l'ID n'existe pas
-        
-    Returns:
-        Index encodé
+    Encode un ID de manière sécurisée.
+    Gère à la fois LabelEncoder et dict.
     """
     try:
         if hasattr(encoder, 'transform'):
             # LabelEncoder sklearn
             return encoder.transform([id_value])[0]
-        else:
+        elif isinstance(encoder, dict):
             # Dict Python
             return encoder[id_value]
-    except (ValueError, KeyError):
+        else:
+            raise ValueError(f"Encoder type non supporté: {type(encoder)}")
+    except (ValueError, KeyError) as e:
         if default_idx is not None:
             return default_idx
         else:
-            raise ValueError(f"ID {id_value} not in encoder")
-
+            # Pour les dict, on peut essayer de trouver l'index via min/max
+            if isinstance(encoder, dict):
+                # Nouvel ID - assigner un nouvel index
+                new_idx = max(encoder.values()) + 1 if encoder else 0
+                encoder[id_value] = new_idx
+                return new_idx
+            raise ValueError(f"ID {id_value} not in encoder: {e}")
 
 def get_all_classes(encoder):
-    """
-    Récupère toutes les classes d'un encoder.
-    
-    Args:
-        encoder: LabelEncoder ou dict
-        
-    Returns:
-        Liste ou array des classes
-    """
+    """Récupère toutes les classes d'un encoder."""
     if hasattr(encoder, 'classes_'):
         # LabelEncoder
         return encoder.classes_
-    else:
+    elif isinstance(encoder, dict):
         # Dict
         return list(encoder.keys())
-
+    else:
+        return []
 
 def encoder_len(encoder):
-    """
-    Retourne la longueur d'un encoder.
-    
-    Args:
-        encoder: LabelEncoder ou dict
-        
-    Returns:
-        Nombre d'éléments
-    """
+    """Retourne la longueur d'un encoder."""
     if hasattr(encoder, 'classes_'):
         return len(encoder.classes_)
-    else:
+    elif isinstance(encoder, dict):
         return len(encoder)
-
+    else:
+        return 0
 
 def is_in_encoder(encoder, id_value):
     """
@@ -98,7 +120,7 @@ def is_in_encoder(encoder, id_value):
 
 
 # ============================================================================
-# FONCTION PRINCIPALE DE RECOMMANDATION
+# FONCTION PRINCIPALE DE RECOMMANDATION (CORRIGÉE)
 # ============================================================================
 
 def recommend_movies(user_id: int, 
@@ -150,7 +172,9 @@ def recommend_movies(user_id: int,
     for movie_id in candidate_movie_ids:
         try:
             movie_idx = safe_transform(movie_encoder, movie_id)
-            pred_rating = algo.predict(user_idx, movie_idx).est
+            # === CORRECTION ICI ===
+            pred_rating = predict_with_trainset(algo, user_idx, movie_idx, train_df).est
+            # === FIN CORRECTION ===
             predictions.append((movie_id, pred_rating))
         except (ValueError, Exception) as e:
             # Film pas dans l'encoder ou erreur de prédiction
@@ -180,7 +204,7 @@ def recommend_movies(user_id: int,
 
 
 # ============================================================================
-# STRATÉGIES ADDITIONNELLES (OPTIONNELLES)
+# STRATÉGIES ADDITIONNELLES (CORRIGÉES)
 # ============================================================================
 
 def get_popular_movies(df_movies: pd.DataFrame,
@@ -357,7 +381,9 @@ def recommend_hybrid(user_id: int,
         
         # Score SVD
         try:
-            svd_prediction = algo.predict(user_idx, movie_idx).est
+            # === CORRECTION ICI ===
+            svd_prediction = predict_with_trainset(algo, user_idx, movie_idx, train_df).est
+            # === FIN CORRECTION ===
         except Exception as e:
             logger.debug(f"SVD prediction failed for movie {movie_id}: {e}")
             svd_prediction = 3.0

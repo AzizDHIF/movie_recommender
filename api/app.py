@@ -2,19 +2,19 @@
 """
 Ce correctif gère les LabelEncoder au lieu des dictionnaires.
 """
-
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pandas as pd
 import logging
-
 from src.load_save_data import load_model_and_encoders_from_gcs, load_data_from_gcs, load_model_and_encoders_local, load_local_all_data
-from src.recommend import recommend_movies
+from src.recommend import recommend_movies, get_recommendations
 from src.train import train_best_model
+from src.check_compatibility_local_cloud import *
 
 # ============================================================================
 # CONFIGURATION LOGGING
 # ============================================================================
+quick_compare_cloud_vs_local()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,9 +28,10 @@ logger = logging.getLogger(__name__)
 
 logger.info("Loading model and data from GCS...")
 try:
-    algo, user_encoder, movie_encoder = load_model_and_encoders_local()
-    df, df_movies, train_df = load_local_all_data()  # ✅ Récupérer les 3 éléments
+    algo, user_encoder, movie_encoder = load_model_and_encoders_from_gcs()
+    df, df_movies, train_df = load_data_from_gcs()  # ✅ Récupérer les 3 éléments
     logger.info(f"train_df columns = {train_df.columns.tolist()}")
+    check_model_data_compatibility(algo, user_encoder, movie_encoder, train_df)
     
     # FIX: Gérer LabelEncoder
     if hasattr(user_encoder, 'classes_'):
@@ -159,12 +160,13 @@ def health_check():
     }
 
 
+# Dans api/app.py, modifiez l'endpoint /predict :
+
 @app.post("/predict")
 def predict(req: Request):
     """
     Génère des recommandations avec stratégie adaptative.
     """
-
     try:
         # Déterminer la stratégie
         num_ratings = get_user_rating_count(req.user_id)
@@ -199,35 +201,106 @@ def predict(req: Request):
                 "total_ratings": get_user_rating_count(req.user_id)
             }
         
-        # Sinon, générer des recommandations
-        recommendations = recommend_movies(
-            req.user_id, 
-            train_df, 
-            df_movies, 
-            algo, 
-            user_encoder, 
-            movie_encoder, 
-            top_n=5
-        )
+        # ============================================================
+        # REMPLACER TOUT CE BLOCO (lignes 98 à 141) PAR CE CODE CI-DESSOUS
+        # ============================================================
+        
+        # UTILISER LA VRAIE LOGIQUE DES STRATÉGIES
+        if strategy == "popular":
+            # Cold start total : films populaires
+            logger.info(f"Using POPULAR strategy for user {req.user_id}")
+            recommendations_tuples = get_popular_movies(df_movies, train_df, top_n=5)
+            
+        elif strategy == "hybrid":
+            # Cold start partiel : hybride
+            logger.info(f"Using HYBRID strategy for user {req.user_id}")
+            recommendations_tuples = recommend_hybrid(
+                req.user_id, train_df, df_movies,
+                algo, user_encoder, movie_encoder, top_n=5
+            )
+            
+        else:  # "personalized"
+            # Utilisateur établi : SVD personnalisé
+            logger.info(f"Using PERSONALIZED SVD for user {req.user_id}")
+            recommendations_tuples = recommend_movies(
+                req.user_id, train_df, df_movies,
+                algo, user_encoder, movie_encoder, top_n=5
+            )
+        
+        # Formater les résultats
+        recommendations = []
+        for movie_id, title, rating in recommendations_tuples:
+            recommendations.append({
+                "movie_id": int(movie_id),
+                "title": title,
+                "predicted_rating": round(float(rating), 2)
+            })
         
         return {
             "user_id": req.user_id,
             "num_ratings": num_ratings,
-            "recommendation_strategy": strategy,
-            "recommendations": [
-                {
-                    "movie_id": int(m),
-                    "title": t,
-                    "predicted_rating": round(float(r), 2)
-                }
-                for m, t, r in recommendations
-            ]
+            "recommendation_strategy": strategy,  # <-- IMPORTANT: vraie stratégie
+            "recommendations": recommendations
         }
+        # ============================================================
+        # FIN DU REMPLACEMENT
+        # ============================================================
     
     except Exception as e:
         logger.error(f"Error in /predict: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
+        
+        # Fallback SEULEMENT en cas d'erreur
+        try:
+            logger.warning(f"Using fallback for user {req.user_id} due to error: {e}")
+            
+            # Obtenir les films déjà notés
+            rated_movies = set(train_df[train_df['userId'] == req.user_id]['movieId'])
+            
+            # Obtenir les films populaires non notés
+            movie_stats = train_df.groupby('movieId').agg({
+                'rating': ['mean', 'count']
+            }).reset_index()
+            movie_stats.columns = ['movieId', 'avg_rating', 'num_ratings']
+            
+            # Filtrer et trier
+            popular_movies = movie_stats[
+                (~movie_stats['movieId'].isin(rated_movies)) &
+                (movie_stats['num_ratings'] >= 10)
+            ]
+            popular_movies = popular_movies.sort_values(
+                by=['avg_rating', 'num_ratings'], 
+                ascending=[False, False]
+            ).head(5)
+            
+            # Formater les résultats du fallback
+            fallback_recommendations = []
+            for _, row in popular_movies.iterrows():
+                movie_id = row['movieId']
+                title = df_movies[df_movies['movieId'] == movie_id]['title'].iloc[0]
+                
+                fallback_recommendations.append({
+                    "movie_id": int(movie_id),
+                    "title": title,
+                    "predicted_rating": round(float(row['avg_rating']), 2)
+                })
+            
+            return {
+                "user_id": req.user_id,
+                "num_ratings": get_user_rating_count(req.user_id),
+                "recommendation_strategy": "popular_fallback_error",
+                "error": str(e),
+                "recommendations": fallback_recommendations
+            }
+            
+        except Exception as fallback_error:
+            # Dernier recours
+            logger.error(f"Fallback also failed: {fallback_error}")
+            return {
+                "user_id": req.user_id,
+                "error": f"Main error: {str(e)}, Fallback error: {str(fallback_error)}",
+                "recommendations": []
+            }
+        
 
 @app.post("/rate", status_code=201)
 def add_rating(rating: RatingInput):
