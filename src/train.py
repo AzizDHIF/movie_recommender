@@ -7,6 +7,7 @@ from surprise import Dataset, Reader, SVD
 from surprise.model_selection import train_test_split
 
 def train_best_model(train_df, models_dir="../models"):
+    
     """
     Entraîne le meilleur modèle (SVD) sur le train_df et sauvegarde le modèle.
     
