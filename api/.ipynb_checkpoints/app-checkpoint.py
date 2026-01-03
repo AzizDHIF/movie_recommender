@@ -1,52 +1,71 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import os
+import pickle
 import pandas as pd
+import os
 
-# Importer fonctions depuis src/recommend.py
-from src.recommend import load_model_and_encoders, recommend_movies
+# Importer fonctions depuis src/recommend.py et src/train.py
+from src.load_save_data import (load_model_and_encoders_from_gcs,load_data_from_gcs)
+from src.recommend import recommend_movies 
+from src.train import train_best_model
 
-# Définir les chemins relatifs
-BASE_DIR = os.path.dirname(__file__)
-MODELS_DIR = os.path.join(BASE_DIR, "../models")
-DATA_DIR = os.path.join(BASE_DIR, "../data")
+# Charger modèle, encoders et données depuis GCS
+algo, user_encoder, movie_encoder = load_model_and_encoders_from_gcs()
+train_df, df_movies = load_data_from_gcs()
 
-# Charger le modèle et les encoders dynamiquement
-algo, user_encoder, movie_encoder = load_model_and_encoders(models_dir=MODELS_DIR)
-
-# Charger la table des films
-df_movies = pd.read_csv(os.path.join(DATA_DIR, "movies.csv"))
-
-# Créer l'API FastAPI
+# Créer l'API
 app = FastAPI(title="Movie Recommender API")
 
 # Modèle de requête
 class RatingRequest(BaseModel):
     user_id: int
-    movie_ids: list[int] | None = None  # facultatif, si non fourni -> top-N
+    movie_ids: list[int] | None = None  # facultatif, si pas fourni -> top-N
 
 TOP_N = 5
 
+
 @app.post("/predict")
 def predict_ratings(req: RatingRequest):
-    import pandas as pd
-    # Charger le dataframe d'entraînement pour connaître les utilisateurs existants
-    train_df = pd.read_csv(os.path.join(DATA_DIR, "train_df.csv"))
+    global train_df
 
-    # Si des films spécifiques sont fournis
+    # =========================
+    # 1️⃣ Vérifier l'utilisateur
+    # =========================
+    try:
+        user_idx = user_encoder.transform([req.user_id])[0]
+    except ValueError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"user_id {req.user_id} inconnu. "
+                   "Le modèle doit être réentraîné pour supporter de nouveaux utilisateurs."
+        )
+
+    results = []
+
+    # =========================
+    # 2️⃣ Si movie_ids fournis
+    # =========================
     if req.movie_ids:
-        results = []
         for movie_id in req.movie_ids:
-            try:
-                user_idx = user_encoder.transform([req.user_id])[0]
-            except ValueError:
-                # Nouveau utilisateur -> créer un index fictif
-                user_idx = max(train_df['user_idx']) + 1
-
+            # Vérifier que le film existe dans le modèle
             try:
                 movie_idx = movie_encoder.transform([movie_id])[0]
             except ValueError:
-                continue  # ignorer films inconnus
+                continue  # ignorer les films inconnus
+
+            # Ajouter une note simulée (ex: 4.0)
+            new_row = {
+                "userId": req.user_id,
+                "movieId": movie_id,
+                "user_idx": user_idx,
+                "movie_idx": movie_idx,
+                "rating": 4.0
+            }
+
+            train_df = pd.concat(
+                [train_df, pd.DataFrame([new_row])],
+                ignore_index=True
+            )
 
             pred_rating = algo.predict(user_idx, movie_idx).est
             title = df_movies.loc[df_movies['movieId'] == movie_id, 'title'].values
@@ -56,33 +75,44 @@ def predict_ratings(req: RatingRequest):
                 "title": title_str,
                 "predicted_rating": round(pred_rating, 2)
             })
+
         return {"user_id": req.user_id, "predictions": results}
 
-    # Sinon, top-N recommandations
-    recommendations = recommend_movies(
-        user_id=req.user_id,
-        train_df=train_df,
-        df_movies=df_movies,
-        algo=algo,
-        user_encoder=user_encoder,
-        movie_encoder=movie_encoder,
-        top_n=TOP_N
-    )
+    # =========================
+    # 3️⃣ Sinon, top-N recommandations
+    # =========================
+    
+    # LIGNE 1 MODIFIÉE : Récupérer les films notés APRÈS les mises à jour
+    user_rated_movies = train_df[train_df['userId'] == req.user_id]['movieId'].unique().tolist()
+    
+    all_movie_idx = list(movie_encoder.transform(movie_encoder.classes_))
+    pred_for_user = []
+    
+    for movie_idx in all_movie_idx:
+        movie_id = movie_encoder.inverse_transform([movie_idx])[0]
+        
+        # LIGNE 2 MODIFIÉE : Utiliser la liste complète (unique)
+        if movie_id in user_rated_movies:
+            continue
+            
+        pred_rating = algo.predict(user_idx, movie_idx).est
+        title = df_movies.loc[df_movies['movieId'] == movie_id, 'title'].values
+        title_str = title[0] if len(title) > 0 else "Unknown Title"
+        pred_for_user.append({
+            "movie_id": movie_id,
+            "title": title_str,
+            "predicted_rating": round(pred_rating, 2)
+        })
 
-    return {
-        "user_id": req.user_id,
-        "top_recommendations": [
-            {"title": title, "predicted_rating": round(rating, 2)}
-            for title, rating in recommendations
-        ]
-    }
+    top_recommendations = sorted(pred_for_user, key=lambda x: x["predicted_rating"], reverse=True)[:TOP_N]
 
-# Endpoint pour réentraînement futur
+    return {"user_id": req.user_id, "top_recommendations": top_recommendations}
+
 @app.post("/retrain")
 def retrain_model():
-    from src.train import train_best_model
-    train_best_model()  # fonction qui entraîne SVD et met à jour les pickle
-    # Recharger le modèle après réentraînement
-    global algo, user_encoder, movie_encoder
-    algo, user_encoder, movie_encoder = load_model_and_encoders(models_dir=MODELS_DIR)
-    return {"message": "Modèle réentraîné et mis à jour"}
+    global algo, user_encoder, movie_encoder, train_df
+
+    # Réentraînement du modèle sur train_df et sauvegarde sur GCS
+    algo, user_encoder, movie_encoder = train_best_model(train_df)
+
+    return {"message": "Modèle réentraîné et mis à jour sur le cloud"}
