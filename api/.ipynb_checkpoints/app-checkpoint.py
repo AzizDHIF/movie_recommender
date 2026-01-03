@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 
 logger.info("Loading model and data from GCS...")
 try:
-    algo, user_encoder, movie_encoder = load_model_and_encoders_from_gcs()
-    df, df_movies, train_df = load_data_from_gcs()  # ✅ Récupérer les 3 éléments
+    algo, user_encoder, movie_encoder = load_model_and_encoders_local()
+    df, df_movies, train_df = load_local_all_data()  # ✅ Récupérer les 3 éléments
+    logger.info(f"train_df columns = {train_df.columns.tolist()}")
     
     # FIX: Gérer LabelEncoder
     if hasattr(user_encoder, 'classes_'):
@@ -338,7 +339,7 @@ def retrain():
         logger.info("Starting model retraining...")
         algo, user_encoder, movie_encoder = train_best_model(train_df, save_mode="cloud")
         logger.info("✓ Model retrained")
-        logger.info("train_df columns", train_df.columns.tolist())
+        
         
         return {
             "status": "success",

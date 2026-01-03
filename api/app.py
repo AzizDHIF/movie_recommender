@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 logger.info("Loading model and data from GCS...")
 try:
-    algo, user_encoder, movie_encoder = load_model_and_encoders_from_gcs()
-    df, df_movies, train_df = load_data_from_gcs()  # ✅ Récupérer les 3 éléments
+    algo, user_encoder, movie_encoder = load_model_and_encoders_local()
+    df, df_movies, train_df = load_local_all_data()  # ✅ Récupérer les 3 éléments
     logger.info(f"train_df columns = {train_df.columns.tolist()}")
     
     # FIX: Gérer LabelEncoder
