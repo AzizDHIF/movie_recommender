@@ -48,7 +48,8 @@ def load_data_from_gcs():
 
     train_df = pd.read_csv(io.BytesIO(train_blob.download_as_bytes()))
     df_movies = pd.read_csv(io.BytesIO(movies_blob.download_as_bytes()))
-    return train_df, df_movies, df_blob
+    df_ratings = pd.read_csv(io.BytesIO(df_blob.download_as_bytes()))
+    return train_df, df_movies, df_ratings
 
 def load_local_all_data():
     """Charge toutes les données locales"""

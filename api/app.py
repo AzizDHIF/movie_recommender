@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import pandas as pd
 import logging
 
-from src.load_save_data import load_model_and_encoders_from_gcs, load_data_from_gcs
+from src.load_save_data import load_model_and_encoders_from_gcs, load_data_from_gcs, load_model_and_encoders_local, load_local_all_data
 from src.recommend import recommend_movies
 from src.train import train_best_model
 
@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 logger.info("Loading model and data from GCS...")
 try:
     algo, user_encoder, movie_encoder = load_model_and_encoders_from_gcs()
-    train_df, df_movies, _ = load_data_from_gcs()  # ✅ Récupérer les 3 éléments
+    df, df_movies, train_df = load_data_from_gcs()  # ✅ Récupérer les 3 éléments
+    logger.info(f"train_df columns = {train_df.columns.tolist()}")
     
     # FIX: Gérer LabelEncoder
     if hasattr(user_encoder, 'classes_'):
@@ -163,6 +164,7 @@ def predict(req: Request):
     """
     Génère des recommandations avec stratégie adaptative.
     """
+
     try:
         # Déterminer la stratégie
         num_ratings = get_user_rating_count(req.user_id)
@@ -337,6 +339,7 @@ def retrain():
         logger.info("Starting model retraining...")
         algo, user_encoder, movie_encoder = train_best_model(train_df, save_mode="cloud")
         logger.info("✓ Model retrained")
+        
         
         return {
             "status": "success",
