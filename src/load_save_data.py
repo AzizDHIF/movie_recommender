@@ -122,3 +122,59 @@ def load_model(source="local"):
         
         
 
+# ==================== SAUVEGARDE DATA ====================
+
+def save_data_local(df, filename):
+    """Sauvegarde CSV en local"""
+    data_dir = Path(__file__).parent.parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    df.to_csv(data_dir / filename, index=False)
+    print(f"✅ {filename} → local")
+
+def upload_csv_to_gcs(df, filename):
+    """Sauvegarde CSV sur GCS"""
+    client = storage.Client()
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f"data/{filename}")
+
+    buffer = io.StringIO()
+    df.to_csv(buffer, index=False)
+    blob.upload_from_string(buffer.getvalue(), content_type="text/csv")
+
+    print(f"✅ {filename} → GCS")
+
+def save_data_to_both(df, filename):
+    """Sauvegarde data en local + cloud"""
+    save_data_local(df, filename)
+    upload_csv_to_gcs(df, filename)
+    
+    
+def save_json_local(data: dict, filename: str):
+    """Sauvegarde JSON en local"""
+    models_dir = Path(__file__).parent.parent / "models"
+    models_dir.mkdir(exist_ok=True)
+
+    with open(models_dir / filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    print(f"✅ {filename} → local (JSON)")
+
+def upload_json_to_gcs(data: dict, filename: str):
+    """Sauvegarde JSON sur GCS"""
+    client = storage.Client()
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f"models/{filename}")
+
+    blob.upload_from_string(
+        json.dumps(data, indent=4),
+        content_type="application/json"
+    )
+
+    print(f"✅ {filename} → GCS (JSON)")
+
+    
+def save_json_to_both(data: dict, filename: str):
+    """Sauvegarde JSON en local + cloud"""
+    save_json_local(data, filename)
+    upload_json_to_gcs(data, filename)
+
