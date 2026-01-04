@@ -1,63 +1,80 @@
 # src/train.py
 import pandas as pd
 from surprise import Dataset, Reader, SVD
-from .load_save_data import upload_to_gcs, save_local, load_local_data, load_data_from_gcs
+from surprise.model_selection import GridSearchCV
+import sys
+from pathlib import Path
 
-# Dans src/train.py, modifiez la création des encodeurs :
+# Ajouter la racine du projet au path
+project_root = Path(__file__).resolve().parent.parent
+sys.path.append(str(project_root))
 
-def train_best_model(train_df, save_mode="cloud"):
+from src.load_save_data import upload_to_gcs, save_local, load_local_all_data, load_data_from_gcs, save_json_to_both
+import pickle
+
+def train_best_model(train_df, best_params, save_mode="cloud"):
     """Entraîne et sauvegarde le modèle."""
     from sklearn.preprocessing import LabelEncoder
-    import pickle
-    
-    # 1. Créer les encodeurs LabelEncoder
+
+    # Encodeurs
     user_encoder = LabelEncoder()
     movie_encoder = LabelEncoder()
-    
-    # 2. Fit avec les IDs uniques
     user_encoder.fit(train_df['userId'].unique())
     movie_encoder.fit(train_df['movieId'].unique())
-    
     print(f"Encoded {len(user_encoder.classes_)} users and {len(movie_encoder.classes_)} movies")
-    
-    # 3. S'assurer que les colonnes user_idx et movie_idx existent
+
+    # Colonnes indices
     if 'user_idx' not in train_df.columns or 'movie_idx' not in train_df.columns:
-        print("Adding idx columns...")
-        train_df = train_df.copy()
         train_df['user_idx'] = user_encoder.transform(train_df['userId'])
         train_df['movie_idx'] = movie_encoder.transform(train_df['movieId'])
-    
-    # 4. Entraînement (inchangé)
+
+    # Dataset surprise
     reader = Reader(rating_scale=(train_df['rating'].min(), train_df['rating'].max()))
     data = Dataset.load_from_df(train_df[['user_idx', 'movie_idx', 'rating']], reader)
     trainset = data.build_full_trainset()
-    
-    algo = SVD(random_state=42)
+
+    # Modèle SVD avec hyperparamètres
+    algo = SVD(**best_params)
     algo.fit(trainset)
-    
-    # 5. Sauvegarde
+
+    # Sauvegarde
     if save_mode == "cloud":
-        # Sauvegarder comme pickle
         upload_to_gcs(pickle.dumps(algo), "svd_model.pkl")
-        upload_to_gcs(pickle.dumps(user_encoder), "user_encoder.pkl") 
+        upload_to_gcs(pickle.dumps(user_encoder), "user_encoder.pkl")
         upload_to_gcs(pickle.dumps(movie_encoder), "movie_encoder.pkl")
-    elif save_mode == "local":
+    else:
         save_local(algo, "svd_model.pkl")
         save_local(user_encoder, "user_encoder.pkl")
         save_local(movie_encoder, "movie_encoder.pkl")
-    
-    return algo, user_encoder, movie_encoder
 
+    return algo, user_encoder, movie_encoder
 
 if __name__ == "__main__":
     import sys
     mode = sys.argv[1] if len(sys.argv) > 1 else "cloud"
-    
-    # Chargement
+
+    # 1️⃣ Charger données
     if mode == "cloud":
         _ , _ , df_ratings = load_data_from_gcs()
     else:
-        _ , _ , df_ratings = load_local_all_data()
-    
-    # Entraînement
-    train_best_model(df_ratings, mode)
+        _ , _ , df_ratings = load_all_local_data()
+
+    # 2️⃣ GridSearch SVD
+    reader = Reader(rating_scale=(df_ratings['rating'].min(), df_ratings['rating'].max()))
+    data = Dataset.load_from_df(df_ratings[['userId','movieId','rating']], reader)
+    gs = GridSearchCV(SVD,
+                      param_grid={
+                          'n_factors':[20,50,100],
+                          'n_epochs':[20,30],
+                          'lr_all':[0.002,0.005],
+                          'reg_all':[0.02,0.05]
+                      },
+                      measures=['rmse'], cv=3, n_jobs=-1)
+    print("🔍 Recherche des meilleurs hyperparamètres SVD...")
+    gs.fit(data)
+    best_params = gs.best_params['rmse']
+    save_json_to_both(best_params, "svd_best_params.json")
+    print("✅ Meilleurs paramètres sauvegardés.")
+
+    # 3️⃣ Entraîner et sauvegarder le modèle final
+    train_best_model(df_ratings, best_params, save_mode=mode)

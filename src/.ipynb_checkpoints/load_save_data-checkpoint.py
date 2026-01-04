@@ -4,6 +4,7 @@ from pathlib import Path
 from google.cloud import storage
 import io
 import numpy as np
+import json
 
 BUCKET_NAME = "movie-reco-models-fatma-aziz-students-group2"
 

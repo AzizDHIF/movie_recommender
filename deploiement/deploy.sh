@@ -27,3 +27,17 @@ gcloud run deploy $SERVICE_NAME \
 echo "=== 5. URL du service ==="
 SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region $REGION --format="value(status.url)")
 echo "URL: $SERVICE_URL"
+
+
+# =============================================================
+# 6. Lancer l'entraînement Vertex AI (optionnel)
+# =============================================================
+echo "=== 6. Lancement du training Vertex AI ==="
+
+gcloud ai custom-jobs create \
+  --region=$REGION \
+  --display-name=svd-training-job \
+  --worker-pool-spec=machine-type=n1-standard-4,replica-count=1,container-image-uri=gcr.io/$PROJECT_ID/$IMAGE_NAME \
+  --args="python","src/train.py","cloud"
+
+echo "✅ Training Vertex AI lancé !"
