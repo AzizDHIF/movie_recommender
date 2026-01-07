@@ -180,75 +180,81 @@ cd movie-recommender
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
 
-# Set environment variables
-export PROJECT_ID="your-gcp-project"
-export BUCKET_NAME="your-bucket-name"
-export DATASET_ID="movielens"
-```
 
-### Run Locally
 
-```bash
-# Start FastAPI
-cd api
-uvicorn app:app --host 0.0.0.0 --port 8000
-#sur cloud , en loccal 
-# In another terminal, start Streamlit
-cd frontend
-streamlit run streamlit_app.py
-```
 
-## ☁️ Deployment
+# Setup & Deployment Guide
 
-### 1. Setup GCP Resources
+## ☁️ Cloud Storage Setup (GCP)
 
-```bash
-# Create BigQuery dataset
-bq mk --dataset ${PROJECT_ID}:movielens
+### 1. Create the Cloud Storage Bucket
+gsutil mb gs://movie-reco-models-fatma-aziz-students-group2
 
-# Create Cloud Storage bucket
-gsutil mb gs://${BUCKET_NAME}
+### 2. Upload Trained Models Automatically
+gsutil cp models/*.pkl gs://movie-reco-models-fatma-aziz-students-group2/
 
-# Upload data to BigQuery
-bq load --source_format=CSV \
-  movielens.movies \
-  data/raw/movies.csv \
-  movieId:INTEGER,title:STRING,genres:STRING
-```
+---
 
-### 2. Deploy FastAPI to Cloud Run
+## 💻 Local Deployment
 
-```bash
-cd api
+### 1. Create & Prepare the Local Environment
+pip install -r deploiement/requirements.txt
+pip install numpy scipy joblib
+pip install scikit-surprise
 
-# Build and push Docker image
-gcloud builds submit --tag gcr.io/${PROJECT_ID}/movie-reco-api
+---
 
-# Deploy to Cloud Run
-gcloud run deploy movie-reco-api \
-  --image gcr.io/${PROJECT_ID}/movie-reco-api \
-  --platform managed \
-  --region europe-west1 \
-  --allow-unauthenticated \
-  --set-env-vars PROJECT_ID=${PROJECT_ID},BUCKET_NAME=${BUCKET_NAME}
-```
+### 2. Model Training & Recommendation Scripts
+python src/train.py
+python src/recommend.py
 
-### 3. Deploy Streamlit (Optional)
+---
 
-```bash
-cd frontend
+### 3. Start the Backend (FastAPI)
+uvicorn api.app:app --reload
 
-gcloud builds submit --tag gcr.io/${PROJECT_ID}/movie-reco-ui
-gcloud run deploy movie-reco-ui \
-  --image gcr.io/${PROJECT_ID}/movie-reco-ui \
-  --platform managed \
-  --region europe-west1 \
-  --allow-unauthenticated \
-  --set-env-vars API_URL=https://movie-reco-api-xxx.run.app
-```
+---
+
+### 4. Start the Frontend (Streamlit)
+pip install --upgrade streamlit
+pip install plotly
+streamlit run interface.py
+
+---
+
+## ⭐ Strengths of Our Solution
+
+The execution of scripts and the application is flexible and adapts to the execution environment (local or cloud).
+
+---
+
+## 🔁 Flexible Execution Modes
+
+### 1️⃣ Model Training
+
+Local training:
+python -m src.train local
+
+Cloud training with Vertex AI:
+python -m src.train cloud
+
+---
+
+### 2️⃣ Backend Execution
+
+Local mode:
+$env:RUN_MODE="local"
+uvicorn api.app:app --reload
+
+Cloud mode:
+$env:RUN_MODE="cloud"
+uvicorn api.app:app --reload
+
+---
+
+### 3️⃣ Frontend Execution
+streamlit run interface.py
 
 ## 📖 Usage
 

@@ -109,10 +109,16 @@ try:
         logger.info("📦 Loading model and data from LOCAL...")
         algo, user_encoder, movie_encoder = load_model_and_encoders_local()
         df, df_movies, train_df = load_local_all_data()
-
     elif MODE == "cloud":
         logger.info("☁️ Loading model and data from GCS...")
-        algo, user_encoder, movie_encoder = load_model_and_encoders_from_gcs()
+        algo_bytes, user_bytes, movie_bytes = load_model_and_encoders_from_gcs()
+
+        # 🔹 Dé-pickle les objets
+        import pickle
+        algo = pickle.loads(algo_bytes)
+        user_encoder = pickle.loads(user_bytes)
+        movie_encoder = pickle.loads(movie_bytes)
+
         df, df_movies, train_df = load_data_from_gcs()
 
     else:
