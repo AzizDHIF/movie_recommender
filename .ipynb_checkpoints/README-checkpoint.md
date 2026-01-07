@@ -368,53 +368,82 @@ locust -f tests/load_test.py --host https://movie-reco-api-xxx.run.app
 ## 📁 Project Structure
 
 ```
-movie_recommender/
+.
 ├── README.md
-├── .gitignore
-├── requirements.txt
-│
-├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_preprocessing.ipynb
-│   └── 03_model_training.ipynb
-│
-├── data/
-│   ├── raw/
-│   │   ├── movies.csv
-│   │   └── ratings.csv
-│   ├── processed/
-│   └── bigquery_queries.sql
-│
-├── models/
-│   ├── saved_models/
-│   │   └── svd_model.pkl
-│   └── model_evaluation.py
-│
-├── api/
+├── api
+│   ├── README.md
+│   ├── __pycache__
+│   │   └── app.cpython-310.pyc
 │   ├── app.py
-│   ├── requirements.txt
+│   ├── config
+│   │   └── cold_start_threshold.txt
+│   └── test_api.ipynb
+├── data
+│   ├── df_ratings.csv
+│   ├── movie_encoder.pkl
+│   ├── movies.csv
+│   ├── test_ratings.csv
+│   ├── train_ratings.csv
+│   └── user_encoder.pkl
+├── deploiement
 │   ├── Dockerfile
-│   └── tests/
-│
-├── frontend/
-│   ├── streamlit_app.py
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── deployment/
-│   ├── deploy_cloudrun.sh
-│   ├── setup_bigquery.sql
-│   └── setup_gcp.md
-│
-├── diagrams/
-│   ├── architecture.png
-│   ├── workflow.png
-│   └── demo.gif
-│
-└── docs/
-    ├── ARCHITECTURE.md
-    ├── API_REFERENCE.md
-    └── USER_GUIDE.md
+│   ├── README.md
+│   ├── deploy.sh
+│   └── requirements.txt
+├── frontend
+│   ├── interface.py
+│   └── streamlit_app.py
+├── models
+│   ├── knn_model.pkl
+│   ├── movie_encoder.pkl
+│   ├── svd_best_params.json
+│   ├── svd_model.pkl
+│   └── user_encoder.pkl
+├── new-workspace.jupyterlab-workspace
+├── notebooks
+│   ├── 00_copier_creer_dataframes.ipynb
+│   ├── 01_bigquery_analysis.ipynb
+│   ├── 02_EDA
+│   │   ├── EDA_avec_bigquery.ipynb
+│   │   ├── EDA_final_avec_pandas.ipynb
+│   │   ├── Exploration.ipynb
+│   │   ├── README.md
+│   │   └── figures
+│   │       ├── distribution_ratings.png
+│   │       ├── genres_per_movie.png
+│   │       ├── long_tail_movies.png
+│   │       ├── movie_bias.png
+│   │       ├── ratings_per_movie.png
+│   │       ├── ratings_per_user.png
+│   │       ├── user_activity.png
+│   │       └── user_bias.png
+│   ├── 03_preprocessing.ipynb
+│   ├── 04_training.ipynb
+│   ├── 05_comparaison_best_model.ipynb
+│   ├── 06_cold_start_analysis.ipynb
+│   ├── cold_start_analysis
+│   │   ├── cold_start_analysis.png
+│   │   ├── cold_start_analysis_svd.csv
+│   │   ├── cold_start_comparison.csv
+│   │   ├── cold_start_super_simple.png
+│   │   └── model_comparison_cold_start.png
+│   ├── complete_model_comparison.png
+│   ├── model_comparison_elegant.png
+│   ├── model_comparison_rmse.png
+│   └── results
+│       ├── cold_start_results.csv
+│       └── rmse_mae_time_results.csv
+└── src
+    ├── __pycache__
+    │   ├── check_compatibility_local_cloud.cpython-310.pyc
+    │   ├── load_save_data.cpython-310.pyc
+    │   ├── recommend.cpython-310.pyc
+    │   └── train.cpython-310.pyc
+    ├── check_compatibility_local_cloud.py
+    ├── load_save_data.py
+    ├── predict_utils.py
+    ├── recommend.py
+    └── train.py
 ```
 
 ## 🎓 Key Learnings
