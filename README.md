@@ -195,7 +195,7 @@ export DATASET_ID="movielens"
 # Start FastAPI
 cd api
 uvicorn app:app --host 0.0.0.0 --port 8000
-
+#sur cloud , en loccal 
 # In another terminal, start Streamlit
 cd frontend
 streamlit run streamlit_app.py

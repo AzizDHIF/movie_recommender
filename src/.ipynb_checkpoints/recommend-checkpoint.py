@@ -1,6 +1,5 @@
 """
 Module de recommandation avec gestion adaptative du cold start.
-
 Stratégie en 3 niveaux :
 - POPULAR : 0 ratings → Films populaires
 - HYBRID : 1-11 ratings → Popularité + Genres préférés + SVD
@@ -51,7 +50,6 @@ def predict_with_trainset(algo, user_idx, movie_idx, train_df):
     # S'assurer que algo a un trainset
     algo = ensure_algo_has_trainset(algo, train_df)
     
-    # Utiliser l'API standard de surprise
     return algo.predict(user_idx, movie_idx)
 
 # ============================================================================
