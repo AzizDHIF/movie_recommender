@@ -81,7 +81,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 3. **After 11 Ratings**: Highly personalized suggestions using collaborative filtering
 
 ### Live Demo
-🌐 **API Endpoint**: `http://localhost:8501/`  
+🌐 **API Endpoint**: `http://localhost:8000/`  
 🖥️ **Web Interface**: `http://localhost:8501/`
 
 ## 🛠️ Technologies
@@ -256,6 +256,8 @@ uvicorn api.app:app --reload
 ### 3️⃣ Frontend Execution
 streamlit run interface.py
 
+```
+
 ## 📖 Usage
 
 ### API Endpoints
@@ -303,7 +305,7 @@ Content-Type: application/json
 ```python
 import requests
 
-API_URL = "https://movie-reco-api-xxx.run.app"
+API_URL = "http://localhost:8000"
 
 # Get recommendations
 response = requests.post(
@@ -481,8 +483,8 @@ locust -f tests/load_test.py --host https://movie-reco-api-xxx.run.app
 
 ## 👥 Team
 
-- **Fatma Chahed** - Data Engineering & ML
-- **Aziz Dhif** - Backend & API
+- **Fatma Chahed** - AI student
+- **Aziz Dhif** - AI student
 
 ## 📅 Project Timeline
 
@@ -493,7 +495,7 @@ This project was completed over 4 weeks (1 month) with the following milestones:
 
 | Day | Tasks | Deliverables |
 |-----|-------|--------------|
-| Day 1-2 | • Setup GCP project<br>• Create BigQuery dataset<br>• Upload MovieLens data | ✅ BigQuery tables populated<br>✅ GCP environment ready |
+| Day 1-2 | • Setup GCP project<br>• Create BigQuery dataset<br>• Upload  data | ✅ BigQuery tables populated<br>✅ GCP environment ready |
 | Day 3-4 | • Exploratory Data Analysis<br>• Data visualization<br>• Identify patterns | ✅ `01_data_exploration.ipynb`<br>✅ Statistical insights |
 | Day 5-7 | • Data preprocessing<br>• Handle missing values<br>• Feature engineering | ✅ `02_preprocessing.ipynb`<br>✅ Clean dataset ready |
 
@@ -563,27 +565,15 @@ Week 4: Frontend & Polish      [████████████████
 ```
 
 **Total Duration**: 4 weeks (160 hours)  
-**Team Size**: 3-4 members  
-**Technologies Mastered**: GCP, BigQuery, Vertex AI, FastAPI, Streamlit, Docker, Cloud Run
+**Team Size**: 2 members  
+**Technologies Mastered**: GCP, BigQuery, Vertex AI, FastAPI, Streamlit, Docker, Cloud Run, Cloud Storage
 
 ---
-## 📄 License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
-
-## 🙏 Acknowledgments
-
-- MovieLens for providing the dataset
-- Google Cloud Platform for infrastructure
-- FastAPI and Streamlit communities
-
----
 
 **Project Link**: [https://github.com/votre-team/movie-recommender](https://github.com/votre-team/movie-recommender)
 
-**Live Demo**: [https://movie-reco-ui-xxx.run.app](https://movie-reco-ui-xxx.run.app)
 
-**Documentation**: [https://movie-recommender-docs.web.app](https://movie-recommender-docs.web.app)
 
 ---
 
