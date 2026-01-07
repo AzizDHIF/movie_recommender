@@ -10,7 +10,7 @@ import json
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
-from load_save_data import upload_to_gcs, save_local, load_local_all_data, load_data_from_gcs, save_json_to_both
+from .load_save_data import upload_to_gcs, save_local, load_local_all_data, load_data_from_gcs, save_json_to_both
 import pickle
 
 def train_best_model(train_df, best_params, save_mode="cloud"):
@@ -79,3 +79,4 @@ if __name__ == "__main__":
 
     # 3️⃣ Entraîner et sauvegarder le modèle final
     train_best_model(df_ratings, best_params, save_mode=mode)
+

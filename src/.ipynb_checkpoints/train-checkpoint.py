@@ -4,12 +4,13 @@ from surprise import Dataset, Reader, SVD
 from surprise.model_selection import GridSearchCV
 import sys
 from pathlib import Path
+import json
 
 # Ajouter la racine du projet au path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
-from src.load_save_data import upload_to_gcs, save_local, load_local_all_data, load_data_from_gcs, save_json_to_both
+from .load_save_data import upload_to_gcs, save_local, load_local_all_data, load_data_from_gcs, save_json_to_both
 import pickle
 
 def train_best_model(train_df, best_params, save_mode="cloud"):
@@ -57,7 +58,7 @@ if __name__ == "__main__":
     if mode == "cloud":
         _ , _ , df_ratings = load_data_from_gcs()
     else:
-        _ , _ , df_ratings = load_all_local_data()
+        _ , _ , df_ratings = load_local_all_data()
 
     # 2️⃣ GridSearch SVD
     reader = Reader(rating_scale=(df_ratings['rating'].min(), df_ratings['rating'].max()))
@@ -78,3 +79,4 @@ if __name__ == "__main__":
 
     # 3️⃣ Entraîner et sauvegarder le modèle final
     train_best_model(df_ratings, best_params, save_mode=mode)
+
