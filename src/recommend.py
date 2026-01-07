@@ -3,19 +3,24 @@ Module de recommandation avec gestion adaptative du cold start.
 
 Stratégie en 3 niveaux :
 - POPULAR : 0 ratings → Films populaires
-- HYBRID : 1-9 ratings → Popularité + Genres préférés + SVD
+- HYBRID : 1-11 ratings → Popularité + Genres préférés + SVD
 - PERSONALIZED : 10+ ratings → SVD pur (collaborative filtering)
 """
 import pandas as pd
 import numpy as np
 from typing import List, Tuple
 import logging
-from surprise import Dataset, Reader  # <-- AJOUT
+from surprise import Dataset, Reader  
+
+#  les seuils à utiliser 
+THRESHOLD_COLD_START= 0
+THRESHOLD_HYBRID = 11
+
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# NOUVELLES FONCTIONS AJOUTÉES
+# FONCTIONS POUR LA PERSISTENCE DES DONNEES ET RECOMMENDATIONS EN TEMPS REELS 
 # ============================================================================
 
 def create_surprise_trainset(train_df):
@@ -50,10 +55,8 @@ def predict_with_trainset(algo, user_idx, movie_idx, train_df):
     return algo.predict(user_idx, movie_idx)
 
 # ============================================================================
-# HELPER FUNCTIONS POUR ENCODERS (INCHANGÉ)
+# HELPER FUNCTIONS POUR ENCODERS 
 # ============================================================================
-
-# Dans src/recommend.py
 def safe_transform(encoder, id_value, default_idx=None):
     """
     Encode un ID de manière sécurisée.
@@ -120,7 +123,7 @@ def is_in_encoder(encoder, id_value):
 
 
 # ============================================================================
-# FONCTION PRINCIPALE DE RECOMMANDATION (CORRIGÉE)
+# FONCTION PRINCIPALE DE RECOMMANDATION 
 # ============================================================================
 
 def recommend_movies(user_id: int, 
@@ -204,13 +207,13 @@ def recommend_movies(user_id: int,
 
 
 # ============================================================================
-# STRATÉGIES ADDITIONNELLES (CORRIGÉES)
+# STRATÉGIES ADDITIONNELLES POUR TOUS LES CAS DE RECOMMENDATIONS 
 # ============================================================================
 
 def get_popular_movies(df_movies: pd.DataFrame,
                        train_df: pd.DataFrame,
-                       top_n: int = 10,
-                       min_ratings: int = 50) -> List[Tuple[int, str, float]]:
+                       top_n: int = 20,
+                       min_ratings: int = 10) -> List[Tuple[int, str, float]]:
     """
     Recommande les films les plus populaires (cold start).
     
@@ -418,7 +421,7 @@ def recommend_hybrid(user_id: int,
 
 
 # ============================================================================
-# FONCTION ROUTER (OPTIONNELLE)
+# FONCTION ROUTER 
 # ============================================================================
 
 def get_recommendations(user_id: int,
@@ -449,12 +452,12 @@ def get_recommendations(user_id: int,
     logger.info(f"User {user_id} has {num_ratings} ratings")
     
     # Choisir la stratégie
-    if num_ratings == 0:
+    if num_ratings <= THRESHOLD_COLD_START:
         # Cold start total : films populaires
         logger.info("Strategy: POPULAR (cold start)")
         return get_popular_movies(df_movies, train_df, top_n)
     
-    elif num_ratings < 10:
+    elif num_ratings <= THRESHOLD_HYBRID:
         # Cold start partiel : hybride
         logger.info("Strategy: HYBRID (cold start partial)")
         return recommend_hybrid(
@@ -474,7 +477,6 @@ def get_recommendations(user_id: int,
 # ============================================================================
 # CLI POUR TESTS
 # ============================================================================
-
 if __name__ == "__main__":
     print("Module recommend.py - Tests unitaires")
     

@@ -57,14 +57,14 @@ This project implements an end-to-end movie recommendation system deployed on Go
    - Fast querying for recommendations
 
 2. **ML Layer (Vertex AI + Cloud Storage)**
-   - Model training with SVD/ALS algorithms
+   - Model training with SVD algorithms
    - Model versioning and storage
    - Experimentation tracking
 
 3. **API Layer (Cloud Run)**
    - FastAPI REST API endpoints
    - Model inference and prediction
-   - Scalable containerized deployment
+   - Scalable containerized deployment 
 
 4. **Frontend Layer (Streamlit)**
    - Interactive user interface
@@ -77,12 +77,12 @@ This project implements an end-to-end movie recommendation system deployed on Go
 
 **Demo Workflow:**
 1. **New User (No History)**: System shows popular movies
-2. **After 3 Ratings**: Recommendations start personalizing based on genres
-3. **After 10 Ratings**: Highly personalized suggestions using collaborative filtering
+2. **After 2 Ratings**: Recommendations start personalizing based on genres (hybrid)
+3. **After 11 Ratings**: Highly personalized suggestions using collaborative filtering
 
 ### Live Demo
-🌐 **API Endpoint**: `https://movie-reco-api-xxx.run.app`  
-🖥️ **Web Interface**: `https://movie-reco-ui-xxx.run.app`
+🌐 **API Endpoint**: `http://localhost:8501/`  
+🖥️ **Web Interface**: `http://localhost:8501/`
 
 ## 🛠️ Technologies
 
@@ -95,17 +95,17 @@ This project implements an end-to-end movie recommendation system deployed on Go
 | API Deployment | **Cloud Run** | Serverless container hosting |
 | Frontend | **Streamlit** | Interactive web UI |
 | Containerization | **Docker** | Application packaging |
-| ML Algorithm | **SVD/ALS** | Collaborative filtering |
+| ML Algorithm | **SVD** | Collaborative filtering |
 
 ## 📊 Dataset
 
 **Source**: [MovieLens Dataset](https://grouplens.org/datasets/movielens/)
 
 **Statistics:**
-- 📽️ Movies: 9,742
-- 👥 Users: 610
-- ⭐ Ratings: 100,836
-- 📅 Time Period: 1995-2018
+- 📽️ Movies: 10329
+- 👥 Users: 668
+- ⭐ Ratings: 84271
+<!-- - 📅 Time Period: 1995-2018 -->
 
 **Features:**
 ```python
@@ -122,11 +122,9 @@ ratings.csv
 ```
 
 ### Data Preprocessing
-1. Remove duplicates and missing values
-2. Filter movies with < 10 ratings
-3. Normalize ratings (0-5 scale)
-4. Create user-item interaction matrix
-5. Split train/test (80/20)
+1. Label encoder for users index  and movies index
+2. Create user-item interaction matrix
+3. Split train/test (80/20)
 
 ## 🤖 ML Model
 
@@ -138,20 +136,29 @@ ratings.csv
 - Fast prediction time for real-time recommendations
 
 ### Model Performance
+SVD:
 
 | Metric | Value |
 |--------|-------|
-| RMSE (Test) | 0.87 |
-| MAE (Test) | 0.68 |
-| Training Time | 45 seconds |
-| Prediction Latency | < 100ms |
+| RMSE (Test) | 0.8694 |
+| MAE (Test) | 0.6672|
+| Training Time | 1.4 seconds |
+| Prediction Latency | 0.1 seconds |
+
+
 
 ### Training Pipeline
 ```bash
 notebooks/
-├── 01_data_exploration.ipynb    # EDA and visualization
-├── 02_preprocessing.ipynb       # Data cleaning
-└── 03_model_training.ipynb      # SVD training + evaluation
+├── 00_copier_creer_dataframes.ipynb # copying  the data
+├── 01_bigquery_analysis # first exploratory of the data
+├── 02_EDA  
+├── 03_preprocessing.ipynb      # creating encoders and train-test split 
+├── 04_training.ipynb 
+├── 05_comparaison_best_model
+├── 06_cold_start_analysis
+
+└── 
 ```
 
 ## 🚀 Installation
@@ -166,7 +173,7 @@ notebooks/
 
 ```bash
 # Clone repository
-git clone https://github.com/votre-team/movie-recommender.git
+git clone https://github.com/AzizDHIF/movie_recommender.git
 cd movie-recommender
 
 # Create virtual environment
