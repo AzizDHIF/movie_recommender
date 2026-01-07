@@ -465,21 +465,7 @@ locust -f tests/load_test.py --host https://movie-reco-api-xxx.run.app
 | API Latency | Pre-computed recommendations for active users |
 | Data Freshness | Scheduled BigQuery jobs for incremental updates |
 
-## 📊 Performance Metrics
 
-- **API Response Time**: < 200ms (p95)
-- **Model Accuracy**: RMSE 0.87
-- **System Uptime**: 99.9%
-- **Cost per 1000 requests**: $0.05
-
-## 🔮 Future Improvements
-
-- [ ] Implement content-based filtering for better cold-start
-- [ ] Add A/B testing framework
-- [ ] Real-time model retraining with Vertex AI Pipelines
-- [ ] Multi-armed bandit for exploration/exploitation
-- [ ] User session tracking and analytics
-- [ ] Mobile app (React Native)
 
 ## 👥 Team
 
