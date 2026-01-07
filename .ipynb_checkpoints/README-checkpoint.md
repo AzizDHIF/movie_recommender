@@ -99,7 +99,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 
 ## 📊 Dataset
 
-**Source**: [MovieLens Dataset](https://grouplens.org/datasets/movielens/)
+**Source**: [BigQuery Client](master-ai-cloud.MoviePlatform )
 
 **Statistics:**
 - 📽️ Movies: 10329
@@ -173,7 +173,7 @@ notebooks/
 
 ```bash
 # Clone repository
-git clone https://github.com/votre-team/movie-recommender.git
+git clone https://github.com/AzizDHIF/movie_recommender.git
 cd movie-recommender
 
 # Create virtual environment
@@ -195,7 +195,7 @@ export DATASET_ID="movielens"
 # Start FastAPI
 cd api
 uvicorn app:app --host 0.0.0.0 --port 8000
-
+#sur cloud , en loccal 
 # In another terminal, start Streamlit
 cd frontend
 streamlit run streamlit_app.py

@@ -99,7 +99,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 
 ## 📊 Dataset
 
-**Source**: [MovieLens Dataset](https://grouplens.org/datasets/movielens/)
+**Source**: [BigQuery Client](master-ai-cloud.MoviePlatform )
 
 **Statistics:**
 - 📽️ Movies: 10329
