@@ -1,4 +1,4 @@
-# 🎬 Movie Recommendation System on GCP
+# Movie Recommendation System on GCP
 
 [![GCP](https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -99,7 +99,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 
 ## 📊 Dataset
 
-**Source**: [BigQuery Client](master-ai-cloud.MoviePlatform )
+**Source**: BigQuery Client  (master-ai-cloud.MoviePlatform)
 
 **Statistics:**
 - 📽️ Movies: 10329
@@ -156,9 +156,8 @@ notebooks/
 ├── 03_preprocessing.ipynb      # creating encoders and train-test split 
 ├── 04_training.ipynb 
 ├── 05_comparaison_best_model
-├── 06_cold_start_analysis
+└── 06_cold_start_analysis
 
-└── 
 ```
 
 ## 🚀 Installation
@@ -169,7 +168,18 @@ notebooks/
 - Google Cloud SDK
 - GCP Project with billing enabled
 
-### Local Setup
+### ☁️ Cloud Storage Setup (GCP)
+
+```
+### 1. Create the Cloud Storage Bucket
+gsutil mb gs://movie-reco-models-fatma-aziz-students-group2
+
+### 2. Upload Trained Models Automatically
+gsutil cp models/*.pkl gs://movie-reco-models-fatma-aziz-students-group2/
+
+```
+
+### 💻 Local setup
 
 ```bash
 # Clone repository
@@ -179,59 +189,39 @@ cd movie-recommender
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-
-
-
-
-# Setup & Deployment Guide
-
-## ☁️ Cloud Storage Setup (GCP)
-
-### 1. Create the Cloud Storage Bucket
-gsutil mb gs://movie-reco-models-fatma-aziz-students-group2
-
-### 2. Upload Trained Models Automatically
-gsutil cp models/*.pkl gs://movie-reco-models-fatma-aziz-students-group2/
-
----
-
-## 💻 Local Deployment
-
-### 1. Create & Prepare the Local Environment
+### 💻 Local Deployment:
+There are steps to follow:
+##### 1. Create & Prepare the Local Environment
+```
 pip install -r deploiement/requirements.txt
 pip install numpy scipy joblib
 pip install scikit-surprise
-
----
-
-### 2. Model Training & Recommendation Scripts
+```
+##### 2. Model Training & Recommendation Scripts
+```
 python src/train.py
 python src/recommend.py
-
----
-
-### 3. Start the Backend (FastAPI)
+```
+##### 3. Start the Backend (FastAPI)
+```
 uvicorn api.app:app --reload
+```
 
----
-
-### 4. Start the Frontend (Streamlit)
+##### 4. Start the Frontend (Streamlit)
+```
 pip install --upgrade streamlit
 pip install plotly
 streamlit run interface.py
-
----
-
+```
 ## ⭐ Strengths of Our Solution
-
+```
 The execution of scripts and the application is flexible and adapts to the execution environment (local or cloud).
-
----
-
-## 🔁 Flexible Execution Modes
-
-### 1️⃣ Model Training
+```
+#### ⭐ Flexible Execution Modes
+```
+1️⃣ Model Training
 
 Local training:
 python -m src.train local
@@ -239,9 +229,7 @@ python -m src.train local
 Cloud training with Vertex AI:
 python -m src.train cloud
 
----
-
-### 2️⃣ Backend Execution
+2️⃣ Backend Execution
 
 Local mode:
 $env:RUN_MODE="local"
@@ -251,11 +239,14 @@ Cloud mode:
 $env:RUN_MODE="cloud"
 uvicorn api.app:app --reload
 
----
-
-### 3️⃣ Frontend Execution
+3️⃣ Frontend Execution
 streamlit run interface.py
-
+```
+#### ⭐ Real-time recommendations: when a user rates new movies
+```
+1️⃣ The list of rated movies is updated
+2️⃣ The list of recommendations is updated
+3️⃣ The recommendation strategy is updated 
 ```
 
 ## 📖 Usage
@@ -362,9 +353,6 @@ pytest tests/
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{"user_id": 1}'
-
-# Load testing
-locust -f tests/load_test.py --host https://movie-reco-api-xxx.run.app
 ```
 
 ## 📁 Project Structure
@@ -402,6 +390,7 @@ locust -f tests/load_test.py --host https://movie-reco-api-xxx.run.app
 │   ├── svd_model.pkl
 │   └── user_encoder.pkl
 ├── new-workspace.jupyterlab-workspace
+├── realtime_ratings.pkl
 ├── notebooks
 │   ├── 00_copier_creer_dataframes.ipynb
 │   ├── 01_bigquery_analysis.ipynb
@@ -498,7 +487,7 @@ This project was completed over 4 weeks (1 month) with the following milestones:
 | Day | Tasks | Deliverables |
 |-----|-------|--------------|
 | Day 1-2 | • Research recommendation algorithms<br>• Implement baseline model<br>• Setup Vertex AI (optional) | ✅ Algorithm comparison<br>✅ Baseline metrics |
-| Day 3-5 | • Train SVD/ALS model<br>• Hyperparameter tuning<br>• Model evaluation | ✅ `03_model_training.ipynb`<br>✅ Trained model (RMSE < 1.0) |
+| Day 3-5 | • Train SVD model<br>• Hyperparameter tuning<br>• Model evaluation | ✅ `03_model_training.ipynb`<br>✅ Trained model (RMSE < 1.0) |
 | Day 6-7 | • Save model to Cloud Storage<br>• Test predictions<br>• Document model choices | ✅ Model artifacts stored<br>✅ Evaluation report |
 
 **Key Milestones**: 
@@ -514,8 +503,9 @@ This project was completed over 4 weeks (1 month) with the following milestones:
 | Day | Tasks | Deliverables |
 |-----|-------|--------------|
 | Day 1-2 | • Design API endpoints<br>• Build FastAPI app<br>• Integrate BigQuery + Storage | ✅ `api/app.py` functional<br>✅ Swagger docs |
-| Day 3-4 | • Create Dockerfile<br>• Test locally<br>• Write API tests | ✅ Containerized application<br>✅ Unit tests passing |
-| Day 5-7 | • Deploy to Cloud Run<br>• Configure environment variables<br>• Test production API | ✅ Public API URL<br>✅ 99.9% uptime |
+| Day 3-4 | • Create Dockerfile<br>• Test locally<br>• Write API tests | ✅ Containerized application `deploiement/dockerFile.py`<br>✅ Unit tests passing |
+| Day 5-6 | • Deploy to Cloud Run<br>• Configure environment variables<br>• Test production API | ⛔ Public API URL<br>⛔ uptime |
+| Day 6-7 | • Define flexible code<br>• Run code manually<br>• Test compatibility| ✅ Local API URL<br>✅ 99.9% uptime  |
 
 **Key Milestones**: 
 - ✅ FastAPI with 3 endpoints operational
@@ -529,8 +519,8 @@ This project was completed over 4 weeks (1 month) with the following milestones:
 
 | Day | Tasks | Deliverables |
 |-----|-------|--------------|
-| Day 1-3 | • Build Streamlit interface<br>• Connect to API<br>• Design user flow | ✅ `frontend/streamlit_app.py`<br>✅ Interactive UI |
-| Day 4-5 | • Test progressive recommendations<br>• Record demo video<br>• Take screenshots | ✅ Demo workflow validated<br>✅ Demo assets |
+| Day 1-3 | • Build Streamlit interface<br>• Connect to API<br>• Design user flow | ✅ `frontend/interface.py`<br>✅ Interactive UI |
+| Day 4-5 | • Test progressive recommendations<br>• Take screenshots | ✅ Demo workflow validated<br>✅ Demo assets |
 | Day 6-7 | • Write comprehensive README<br>• Create architecture diagrams<br>• Prepare presentation | ✅ Complete documentation<br>✅ Presentation ready |
 
 **Key Milestones**: 
@@ -538,7 +528,7 @@ This project was completed over 4 weeks (1 month) with the following milestones:
 - ✅ Progressive personalization demo working
 - ✅ GitHub repository polished
 - ✅ Presentation materials complete
-
+- ✅ Workflows complete
 ---
 
 ### Summary Timeline
@@ -559,7 +549,10 @@ Week 4: Frontend & Polish      [████████████████
 
 **Project Link**: [https://github.com/votre-team/movie-recommender](https://github.com/votre-team/movie-recommender)
 
+**Project Presentation**: [https://docs.google.com/presentation..](https://docs.google.com/presentation/d/1KwWCHO2WZIP3CqAu9qxxOjN7SXrlE7zXzDtOwqDlKWI/edit?slide=id.p#slide=id.p)
 
+**Workflows**: 
+[https://drive.google.com/drive..](https://drive.google.com/drive/folders/1UmN3zCAlumDlHp76LtA2ORIkOA2z7pF8?usp=drive_link)
 
 ---
 
