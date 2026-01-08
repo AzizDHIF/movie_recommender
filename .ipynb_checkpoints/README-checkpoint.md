@@ -8,18 +8,22 @@
 > A scalable movie recommendation system built on Google Cloud Platform, demonstrating real-time personalization as users interact with the system.
 
 ## 📋 Table of Contents
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Demo](#demo)
-- [Technologies](#technologies)
-- [Dataset](#dataset)
-- [ML Model](#ml-model)
-- [Installation](#installation)
-- [Deployment](#deployment)
-- [Usage](#usage)
-- [Team](#team)
+* [Overview](#🎯Overview)
+* [Architecture](#🏗️Architecture)
+* [Demo](#🎥Demo)
+* [Technologies](#🛠️Technologies)
+* [Dataset](#📊Dataset)
+* [ML Model](#🤖ML-Model)
+* [Installation](#🚀Installation)
+* [Usage](#📖Usage)
+* [Testing](#🧪Testing)
+* [Project Structure](#📁Project-Structure)
+* [Key Learnings](#🎓Key-Learnings)
+* [Challenges & Solutions](#🚧Challenges-and-Solutions)
+* [Team](#👥Team)
+* [Project Timeline](#📅Project-timeline)
 
-## 🎯 Overview
+## 🎯Overview 
 
 This project implements an end-to-end movie recommendation system deployed on Google Cloud Platform. The system demonstrates how recommendations evolve as a new user progressively rates movies, showcasing the power of collaborative filtering in real-time.
 
@@ -31,7 +35,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 - ✅ Containerized deployment with Docker
 - ✅ Progressive personalization demo
 
-## 🏗️ Architecture
+## 🏗️Architecture
 
 ```
 ┌─────────────┐      ┌──────────────┐      ┌─────────────┐
@@ -71,7 +75,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
    - Real-time rating input
    - Visual recommendation display
 
-## 🎥 Demo
+## 🎥Demo
 
 ### Progressive Recommendation Evolution
 
@@ -84,7 +88,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 🌐 **API Endpoint**: `http://localhost:8000/`  
 🖥️ **Web Interface**: `http://localhost:8501/`
 
-## 🛠️ Technologies
+## 🛠️Technologies
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
@@ -97,7 +101,7 @@ This project implements an end-to-end movie recommendation system deployed on Go
 | Containerization | **Docker** | Application packaging |
 | ML Algorithm | **SVD** | Collaborative filtering |
 
-## 📊 Dataset
+## 📊Dataset
 
 **Source**: BigQuery Client  (master-ai-cloud.MoviePlatform)
 
@@ -126,7 +130,7 @@ ratings.csv
 2. Create user-item interaction matrix
 3. Split train/test (80/20)
 
-## 🤖 ML Model
+## 🤖ML Model
 
 ### Algorithm: Singular Value Decomposition (SVD)
 
@@ -160,7 +164,7 @@ notebooks/
 
 ```
 
-## 🚀 Installation
+## 🚀Installation
 
 ### Prerequisites
 - Python 3.10+
@@ -249,7 +253,7 @@ streamlit run interface.py
 3️⃣ The recommendation strategy is updated 
 ```
 
-## 📖 Usage
+## 📖Usage
 
 ### API Endpoints
 
@@ -343,7 +347,7 @@ user_ratings = [
 
 **Key Observation**: Recommendations evolve from generic (popularity-based) to specific (collaborative filtering) as more ratings are provided.
 
-## 🧪 Testing
+## 🧪Testing
 
 ```bash
 # Run unit tests
@@ -355,7 +359,7 @@ curl -X POST http://localhost:8000/predict \
   -d '{"user_id": 1}'
 ```
 
-## 📁 Project Structure
+## 📁Project Structure
 
 ```
 .
@@ -437,7 +441,7 @@ curl -X POST http://localhost:8000/predict \
     └── train.py
 ```
 
-## 🎓 Key Learnings
+## 🎓Key Learnings
 
 1. **Cloud-Native Development**: Leveraging GCP services for scalability
 2. **Real-Time ML**: Deploying models as REST APIs
@@ -445,7 +449,7 @@ curl -X POST http://localhost:8000/predict \
 4. **DevOps Practices**: CI/CD with Cloud Build, containerization with Docker
 5. **Cost Optimization**: Using serverless (Cloud Run) for efficient resource usage
 
-## 🚧 Challenges & Solutions
+## 🚧Challenges and Solutions
 
 | Challenge | Solution |
 |-----------|----------|
@@ -456,12 +460,12 @@ curl -X POST http://localhost:8000/predict \
 
 
 
-## 👥 Team
+## 👥Team
 
 - **Fatma Chahed** - AI student
 - **Aziz Dhif** - AI student
 
-## 📅 Project Timeline
+## 📅Project timeline
 
 This project was completed over 4 weeks (1 month) with the following milestones:
 
